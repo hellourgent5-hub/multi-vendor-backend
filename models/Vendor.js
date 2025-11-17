@@ -6,17 +6,21 @@ const vendorSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   shopName: { type: String, required: true },
-  role: { type: String, default: 'vendor' }
+  role: { type: String, default: 'vendor' },
+  location: {
+    type: { type: String, default: 'Point' },
+    coordinates: { type: [Number], default: [0,0] } // [lng, lat]
+  }
 }, { timestamps: true });
 
-vendorSchema.pre('save', async function(next){
-  if(!this.isModified('password')) return next();
+vendorSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });
 
-vendorSchema.methods.matchPassword = async function(entered){
+vendorSchema.methods.matchPassword = async function(entered) {
   return await bcrypt.compare(entered, this.password);
 };
 
