@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
 const { registerVendor, loginVendor, listVendors } = require('../controllers/vendorController');
-const { protect, adminOnly } = require('../middlewares/authMiddleware');
+// 💡 CHANGE: Imported 'permit' instead of 'adminOnly'
+const { protect, permit } = require('../middlewares/authMiddleware'); 
 
 router.post('/register', [
   body('name').notEmpty(),
@@ -12,6 +13,9 @@ router.post('/register', [
 ], registerVendor);
 
 router.post('/login', loginVendor);
-router.get('/', protect, adminOnly, listVendors);
+
+// 💡 FIX: The route now uses protect and calls the permit function with the 'admin' role.
+// This call (permit('admin')) returns the actual middleware function.
+router.get('/', protect, permit('admin'), listVendors); 
 
 module.exports = router;
