@@ -1,7 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Vendor = require('../models/Vendor');
-const DeliveryAgent = require('../models/DeliveryAgent');
 
 const protect = async (req, res, next) => {
   let token;
@@ -12,7 +11,6 @@ const protect = async (req, res, next) => {
       // attempt to find user in each collection
       let user = await User.findById(decoded.id).select('-password');
       if (!user) user = await Vendor.findById(decoded.id).select('-password');
-      if (!user) user = await DeliveryAgent.findById(decoded.id).select('-password');
       if (!user) return res.status(401).json({ message: 'Not authorized' });
       req.user = user;
       next();
