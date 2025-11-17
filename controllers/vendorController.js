@@ -1,34 +1,99 @@
-// ... imports and helper functions ...
+// --- Imports and Helper Functions ---
 
-const registerVendor = async (req, res) => { /* ... implementation ... */ };
-
-const loginVendor = async (req, res) => { /* ... implementation ... */ };
-
-const listVendors = async (req, res) => { 
-    // ... implementation ...
-    res.json(vendors); // <-- Sends the list of vendors
+// Assuming you have a Vendor model
+const Vendor = require('../models/Vendor'); 
+// Assuming you use JWT for tokens
+const jwt = require('jsonwebtoken'); 
+// Assuming you use express-validator 
+const { validationResult } = require('express-validator');
+// Assuming you have a function to generate a token
+const generateToken = (id, role) => {
+    return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '30d' });
 };
 
-module.exports = { registerVendor, loginVendor, listVendors }; // <-- All three are exported!
-```
 
-**Conclusion on Backend Error:**
+// --- Controller Functions ---
 
-The error is **not** in these two files based on the code shown. All the imported functions (`registerVendor`, `loginVendor`, `listVendors`) are correctly exported and used in `vendorRoutes.js`.
+const registerVendor = async (req, res) => {
+    // 1. Check validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
 
-This means the crashing `router.get()` is either:
+    const { name, email, password, shopName } = req.body;
 
-A. **In your main `server.js` or `app.js` file:** You are calling `app.get()` with an undefined handler there.
-B. **In another route file** that gets loaded before the server crashes (e.g., `productRoutes.js`).
-C. **There is an issue with the `permit('admin')` middleware** that is causing `listVendors` to become `undefined` when the server loads.
+    try {
+        // 2. Check if vendor already exists
+        const exists = await Vendor.findOne({ email });
+        if (exists) {
+            return res.status(400).json({ message: 'Vendor already exists' });
+        }
 
-### 🛠️ The Most Likely Fix: Middleware Import Failure
+        // 3. Create the new vendor
+        const vendor = await Vendor.create({ name, email, password, shopName, role: 'vendor' });
 
-Since your code structure is good, the most common server crash at startup comes from a failing import or middleware setup. Let's fix the `listVendors` route by ensuring the middleware is handled correctly and is not causing the handler to become undefined.
+        // 4. Generate token and send response
+        if (vendor) {
+            const token = generateToken(vendor.id, vendor.role);
+            res.status(201).json({
+                token,
+                id: vendor.id,
+                email: vendor.email,
+                shopName: vendor.shopName,
+                role: vendor.role
+            });
+        } else {
+            res.status(400).json({ message: 'Invalid vendor data' });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error during registration' });
+    }
+};
 
-In your `vendorRoutes.js` (Screenshot 2), you use:
 
-```javascript
-const { permit } = require('../controllers/authMiddleware'); // Assuming this import exists
-// ...
-router.get('/listVendors', permit('admin'), listVendors);
+const loginVendor = async (req, res) => {
+    const { email, password } = req.body;
+
+    try {
+        const vendor = await Vendor.findOne({ email });
+
+        // Check password using Mongoose model method (assuming your model has matchPassword)
+        if (vendor && (await vendor.matchPassword(password))) {
+            const token = generateToken(vendor.id, vendor.role);
+            res.json({
+                token,
+                id: vendor.id,
+                email: vendor.email,
+                shopName: vendor.shopName,
+                role: vendor.role
+            });
+        } else {
+            res.status(401).json({ message: 'Invalid credentials' });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error during login' });
+    }
+};
+
+
+const listVendors = async (req, res) => {
+    try {
+        // Find all vendors but exclude the password field
+        const vendors = await Vendor.find({}).select('-password');
+        res.json(vendors);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error listing vendors' });
+    }
+};
+
+
+// --- Exports ---
+module.exports = {
+    registerVendor,
+    loginVendor,
+    listVendors
+};
