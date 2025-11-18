@@ -1,27 +1,16 @@
-const express = require('express');
+import express from 'express';
+import { createVendor, getVendors, approveVendor } from '../controllers/vendorController.js';
+import { protect, admin } from '../middlewares/authMiddleware.js';
+
 const router = express.Router();
-const { body } = require('express-validator');
 
-// Import middleware
-const { protect, permit } = require('../middlewares/authMiddleware');
+// Create vendor profile (authenticated)
+router.post('/', protect, createVendor);
 
-// Import controller functions
-const { registerVendor, loginVendor, listVendors } = require('../controllers/vendorController');
+// List all vendors
+router.get('/', protect, getVendors);
 
-// Vendor registration route
-router.post(
-  '/register',
-  body('name').notEmpty().withMessage('Name is required'),
-  body('email').isEmail().withMessage('Valid email is required'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-  body('shopName').notEmpty().withMessage('Shop Name is required'),
-  registerVendor
-);
+// Approve vendor (Admin only)
+router.patch('/approve/:id', protect, admin, approveVendor);
 
-// Vendor login route
-router.post('/login', loginVendor);
-
-// List vendors (admin only) - uncomment when admin role is ready
-// router.get('/listVendors', protect, permit('admin'), listVendors);
-
-module.exports = router;
+export default router;
