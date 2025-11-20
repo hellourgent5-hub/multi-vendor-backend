@@ -1,12 +1,18 @@
-// routes/vendorRoutes.js (TEMPORARY TEST CODE)
-import express from 'express';
+import express from "express";
+import {
+  getVendors,
+  getVendor,
+  createVendor,
+  updateVendor,
+  deleteVendor
+} from "../controllers/vendorController.js";
+
 const router = express.Router();
 
-router.post("/register", (req, res) => {
-    // This is a simple test response that requires no logic or dependencies
-    res.status(200).json({ success: true, message: "Vendor Route Test Succeeded!" });
-});
-
-// Remove or comment out any other code, like router.post("/login", ...)
+router.get("/", getVendors);
+router.get("/:id", getVendor);
+router.post("/", createVendor);
+router.put("/:id", updateVendor);
+router.delete("/:id", deleteVendor);
 
 export default router;
