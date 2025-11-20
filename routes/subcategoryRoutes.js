@@ -1,6 +1,6 @@
 import express from "express";
-import Subcategory from "../models/Subcategory.js";  // ✅ exact match
-import Category from "../models/Category.js";        // ✅ exact match
+import Subcategory from "../models/Subcategory.js";
+import Category from "../models/Category.js";
 
 const router = express.Router();
 
@@ -14,7 +14,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Create a new subcategory
+// Create subcategory
 router.post("/", async (req, res) => {
   try {
     const { name, categoryId } = req.body;
