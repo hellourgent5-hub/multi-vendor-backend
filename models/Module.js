@@ -1,7 +1,9 @@
 import mongoose from "mongoose";
 
 const moduleSchema = new mongoose.Schema({
-  name: { type: String, required: true, unique: true }
+  name: { type: String, required: true },
 }, { timestamps: true });
 
-export default mongoose.model("Module", moduleSchema);
+const Module = mongoose.model("Module", moduleSchema);
+
+export default Module;
