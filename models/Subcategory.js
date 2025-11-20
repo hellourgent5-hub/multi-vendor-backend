@@ -1,3 +1,4 @@
+// models/Subcategory.js
 import mongoose from "mongoose";
 
 const subcategorySchema = new mongoose.Schema({
@@ -12,6 +13,4 @@ const subcategorySchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-const Subcategory = mongoose.model("Subcategory", subcategorySchema);
-
-export default Subcategory;
+export default mongoose.model("Subcategory", subcategorySchema);
